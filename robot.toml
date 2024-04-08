@@ -1,0 +1,3 @@
+python-path = ["tests/DotNetDemoLibrary/bin/Debug/net8.0"]
+[env]
+PYTHONNET_RUNTIME="coreclr"

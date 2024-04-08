@@ -1,0 +1,191 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "robotframework-DotNetLibraryBase"
+dynamic = ["version"]
+description = ''
+readme = "README.md"
+requires-python = ">=3.8"
+license = "Apache-2.0"
+keywords = []
+authors = [{ name = "Daniel Biehl", email = "dbiehl@live.de" }]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Programming Language :: Python :: Implementation :: PyPy",
+]
+dependencies = ["robotframework>=6.0", "pythonnet>=3.0.0"]
+
+[project.urls]
+Documentation = "https://github.com/unknown/robotframework-dotnetlibrarybase#readme"
+Issues = "https://github.com/unknown/robotframework-dotnetlibrarybase/issues"
+Source = "https://github.com/unknown/robotframework-dotnetlibrarybase"
+
+[tool.hatch.version]
+path = "src/DotNetLibraryBase/__about__.py"
+
+[tool.hatch.build]
+dev-mode-dirs = ["src"]
+
+[tool.hatch.build.targets.wheel]
+only-include = ["src/DotNetLibraryBase"]
+sources = ["src"]
+
+# [tool.hatch.build.targets.sdist]
+# only-include = ["src/DotNetLibraryBase"]
+# sources = ["src"]
+
+[tool.hatch.envs.default]
+dependencies = [
+  "coverage[toml]>=6.5",
+  "pytest",
+  "robotframework-tidy>=4.11",
+  "robotframework-robocop>=5.0.0",
+  "ruff",
+  "mypy",
+  "black",
+]
+
+[tool.hatch.envs.default.scripts]
+test = "pytest {args:utests}"
+test-cov = "coverage run -m pytest {args:utests}"
+cov-report = ["- coverage combine", "coverage report"]
+cov = ["test-cov", "cov-report"]
+
+[[tool.hatch.envs.all.matrix]]
+python = ["3.8", "3.9", "3.10", "3.11", "3.12"]
+
+[tool.hatch.envs.types]
+dependencies = ["mypy>=1.0.0"]
+
+[tool.hatch.envs.types.scripts]
+check = "mypy --install-types --non-interactive {args:src/DotNetLibraryBase utests}"
+
+[tool.coverage.run]
+source_pkgs = ["DotNetLibraryBase", "utests"]
+branch = true
+parallel = true
+omit = ["src/DotNetLibraryBase/__about__.py"]
+
+[tool.coverage.paths]
+dotnetlibrarybase = [
+  "src/DotNetLibraryBase",
+  "*/DotNetLibraryBase/src/robotframework_dotnetlibrarybase",
+]
+tests = ["utests", "*/DotNetLibraryBase/utests"]
+
+[tool.coverage.report]
+exclude_lines = ["no cov", "if __name__ == .__main__.:", "if TYPE_CHECKING:"]
+
+# ruff
+
+[tool.ruff]
+line-length = 120
+target-version = "py38"
+
+[tool.ruff.lint]
+ignore = ["E741", "N805", "N999", "RUF012", "RUF006", "ISC001"]
+select = [
+  "E",
+  "F",
+  "W",
+  "I",
+  "N",
+  #"UP",
+  "YTT",
+  #"ANN",
+  #"BLE",
+  #"B",
+  #"A"
+  #"COM"
+  # "C4", # TODO enable this
+  "DTZ",
+  "T10",
+  # "EM",
+  "ISC",
+  "G",
+  #"INP",
+  "PIE",
+  # "T20",
+  "PT",
+  "Q",
+  "RET",
+  # "SIM", # TODO enable this
+  # "TID",
+  # "TCH",
+  # "ARG",
+  # "PTH", # TODO enable this
+  # "SLF", #  TODO enable this
+  # "ERA", # TODO enable this
+  "RSE",
+  # "PL",
+  #"TRY",
+  "RUF",
+  # "TID"
+]
+
+[tool.ruff.lint.per-file-ignores]
+#"__init__.py" = ["F401"]
+
+[tool.ruff.lint.isort]
+detect-same-package = true
+known-first-party = ["robotcode"]
+
+[tool.ruff.lint.flake8-pytest-style]
+fixture-parentheses = false
+mark-parentheses = false
+
+# black
+
+[tool.black]
+line-length = 120
+target-version = ['py38']
+
+
+# mypy
+
+[tool.mypy]
+python_version = "3.8"
+strict = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_return_any = true
+warn_unused_configs = true
+warn_unreachable = true
+implicit_reexport = false
+implicit_optional = true
+disallow_untyped_decorators = false
+disallow_subclassing_any = false
+explicit_package_bases = true
+namespace_packages = true
+exclude = [
+  '^\.mypy_cache/',
+  '^\.venv/',
+  '^\.hatch/',
+  "^build/",
+  "^dist/",
+  "^out/",
+  "^playground/",
+  "^scripts/",
+]
+# allow_untyped_calls = true
+
+[[tool.mypy.overrides]]
+module = ["robot.*", "clr", "System"]
+ignore_missing_imports = true
+no_implicit_reexport = false
+
+# pyright
+[tool.pyright]
+exclude = ["**/.hatch", "**/node_modules", "**/__pycache__", "bundled/libs"]
+typeCheckingMode = "off"
+pythonVersion = "3.8"
+reportMissingImports = "error"

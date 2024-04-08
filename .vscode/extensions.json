@@ -1,0 +1,12 @@
+{
+    "recommendations": [
+        "d-biehl.robotcode",
+        "ms-python.python",
+        "ms-python.debugpy",
+        "ms-python.mypy-type-checker",
+        "charliermarsh.ruff",
+        "ms-python.black-formatter",
+        "ms-dotnettools.csdevkit",
+        "ms-dotnettools.csharp"
+    ]
+}
