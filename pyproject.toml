@@ -91,7 +91,7 @@ dependencies = [
   "GitPython",
   "semantic-version",
   "commitizen>=3.0.0",
-  "git-cliff==1.4.0",
+  "git-cliff>=2.2.0",
 ]
 
 [tool.hatch.envs.build.scripts]
