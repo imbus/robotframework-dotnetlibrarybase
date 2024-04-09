@@ -5,9 +5,10 @@
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, List, Mapping, Optional, Sequence, TextIO
+from typing import Any, List, Mapping, Optional, Sequence
 
 from robot.api.interfaces import DynamicLibrary
+from robot.utils import find_file
 
 
 def _is_file(s: str) -> bool:
@@ -68,31 +69,56 @@ class DotNetLibraryBase(DynamicLibrary):
 
             System.Console.SetError(DotNetLibraryBase.__stderr_writer)
 
-    def __init__(self, reference: Optional[str], class_name: str, *args: Any, **kwargs: Any) -> None:
+    def __init__(self, assembly_qualified_type_name: str, *args: Any, **kwargs: Any) -> None:
         import clr
         import System  #  pyright: ignore[reportMissingImports]
 
         self._init_dotnet()
 
-        self._reference_name = reference
+        splitted = assembly_qualified_type_name.split(",", 1)
+        class_name: Optional[str]
+        reference_name: Optional[str]
+
+        class_name, reference_name = splitted if len(splitted) == 2 else (splitted[0], None)
+
+        if class_name:
+            class_name = class_name.strip()
+
+        if reference_name:
+            reference_name = reference_name.strip()
+
+        self._reference_name = reference_name
 
         if self._reference_name:
             self._reference = clr.AddReference(
-                str(Path(self._reference_name).absolute()) if _is_file(self._reference_name) else self._reference_name
+                str(Path(find_file(self._reference_name))) if _is_file(self._reference_name) else self._reference_name
             )
-        self._namespace, self._class_name = class_name.rsplit(".", 1)
-
-        self._instance = getattr(__import__(self._namespace), self._class_name)(*args, *kwargs)
 
         self._keyword_infos: Optional[List[KeywordInfo]] = None
+
+        self._class_name: Optional[str] = None
+        self._namespace: Optional[str] = None
+        self._instance: Optional[Any] = None
+
+        if class_name:
+            self._namespace, self._class_name = class_name.rsplit(".", 1)
+
+            try:
+                self._instance = getattr(__import__(self._namespace), self._class_name)(*args, *kwargs)
+            except (AttributeError, ImportError) as e:
+                raise TypeError(f"Could not load .NET class '{self._namespace}.{self._class_name}'.") from e
 
     @property
     def keyword_infos(self) -> List[KeywordInfo]:
         if self._keyword_infos is None:
             self._keyword_infos = []
 
+            if self._instance is None:
+                return self._keyword_infos
+
             for method in self._instance.GetType().GetMethods():
                 self._keyword_infos.append(KeywordInfo(method.Name))
+
         return self._keyword_infos
 
     def get_keyword_names(self) -> Sequence[str]:
