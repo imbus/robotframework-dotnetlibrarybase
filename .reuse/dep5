@@ -1,0 +1,30 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: robotframework-DotNetLibraryBase
+Upstream-Contact: Daniel Biehl <daniel.biehl@imbus.de>
+Source: https://github.com/imbus/robotframework-dotnetlibrarybase
+
+# Sample paragraph, commented out:
+#
+# Files: src/*
+# Copyright: $YEAR $NAME <$CONTACT>
+# License: ...
+
+Files: *.sln
+Copyright: 2024 Daniel Biehl <daniel.biehl@imbus.de>
+License: Apache-2.0
+
+Files: *.csproj
+Copyright: 2024 Daniel Biehl <daniel.biehl@imbus.de>
+License: Apache-2.0
+
+Files: *.robot
+Copyright: 2024 Daniel Biehl <daniel.biehl@imbus.de>
+License: Apache-2.0
+
+Files: *.resource
+Copyright: 2024 Daniel Biehl <daniel.biehl@imbus.de>
+License: Apache-2.0
+
+Files: .vscode/*.json
+Copyright: 2024 Daniel Biehl <daniel.biehl@imbus.de>
+License: Apache-2.0

@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2024 Daniel Biehl <daniel.biehl@imbus.de>
+//
+// SPDX-License-Identifier: Apache-2.0
+
 ﻿namespace DotNetDemoLibrary;
 
 public class DemoKeywords
@@ -27,5 +31,10 @@ public class DemoKeywords
     public void DoSomething()
     {
         Console.WriteLine($"Done Something {this.a}");
+    }
+
+    public void DoSomethingWithAnString(string value)
+    {
+        Console.WriteLine($"Done Something with {value}");
     }
 }

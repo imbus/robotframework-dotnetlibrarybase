@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 Daniel Biehl <daniel.biehl@imbus.de>
+#
+# SPDX-License-Identifier: Apache-2.0
+
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -31,7 +35,7 @@ class DotNetLibraryBase(DynamicLibrary):
 
             clr.AddReference(str(base_path / "RobotFramework.DotNetLibraryBase.dll"))
 
-            from RobotFramework.DotNetLibraryBase import (  #  pyright: ignore[reportMissingImports]
+            from RobotFramework.DotNetLibraryBase import (  # type: ignore[import-not-found]
                 ConsoleRedirectorWriter,
             )
 
@@ -44,9 +48,7 @@ class DotNetLibraryBase(DynamicLibrary):
 
                 @clr.clrmethod(None, [System.Char])
                 def WriteChar(self, value: str) -> None:  # noqa: N802
-                    print(
-                        value, end="", file=sys.stderr if self.is_stderr else sys.stdout
-                    )
+                    print(value, end="", file=sys.stderr if self.is_stderr else sys.stdout)
 
                 @clr.clrmethod(None, [])
                 def Flush(self) -> None:  # noqa: N802
@@ -66,9 +68,7 @@ class DotNetLibraryBase(DynamicLibrary):
 
             System.Console.SetError(DotNetLibraryBase.__stderr_writer)
 
-    def __init__(
-        self, reference: Optional[str], class_name: str, *args: Any, **kwargs: Any
-    ) -> None:
+    def __init__(self, reference: Optional[str], class_name: str, *args: Any, **kwargs: Any) -> None:
         import clr
         import System  #  pyright: ignore[reportMissingImports]
 
@@ -78,15 +78,11 @@ class DotNetLibraryBase(DynamicLibrary):
 
         if self._reference_name:
             self._reference = clr.AddReference(
-                str(Path(self._reference_name).absolute())
-                if _is_file(self._reference_name)
-                else self._reference_name
+                str(Path(self._reference_name).absolute()) if _is_file(self._reference_name) else self._reference_name
             )
         self._namespace, self._class_name = class_name.rsplit(".", 1)
 
-        self._instance = getattr(__import__(self._namespace), self._class_name)(
-            *args, *kwargs
-        )
+        self._instance = getattr(__import__(self._namespace), self._class_name)(*args, *kwargs)
 
         self._keyword_infos: Optional[List[KeywordInfo]] = None
 
@@ -102,8 +98,6 @@ class DotNetLibraryBase(DynamicLibrary):
     def get_keyword_names(self) -> Sequence[str]:
         return [i.name for i in self.keyword_infos]
 
-    def run_keyword(
-        self, name: str, args: Sequence[Any], kwargs: Mapping[str, Any]
-    ) -> Any:
+    def run_keyword(self, name: str, args: Sequence[Any], kwargs: Mapping[str, Any]) -> Any:
         method = getattr(self._instance, name)
         return method(*args, **kwargs)
