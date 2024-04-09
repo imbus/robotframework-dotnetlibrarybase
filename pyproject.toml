@@ -233,14 +233,14 @@ tag_format = "v$version"
 version_scheme = "semver"
 version_provider = "scm"
 update_changelog_on_bump = false
-major_version_zero = true
+# major_version_zero = true
 changelog_incremental = true
 changelog_merge_prerelease = true
 gpg_sign = true
 annotated_tag = true
-# pre_bump_hooks = [
-#   # "hatch env remove lint",
-#   "hatch run build:update-git-versions",
-#   "hatch run build:update-changelog",
-#   "git add .",
-# ]
+pre_bump_hooks = [
+  # "hatch env remove lint",
+  "hatch run build:update-git-versions",
+  "hatch run build:update-changelog",
+  "git add .",
+]
