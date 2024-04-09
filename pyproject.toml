@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "hatch-build-scripts"]
 build-backend = "hatchling.build"
 
 [project]
@@ -36,6 +36,14 @@ Source = "https://github.com/unknown/robotframework-dotnetlibrarybase"
 [tool.hatch.version]
 path = "src/DotNetLibraryBase/__about__.py"
 
+[[tool.hatch.build.hooks.build-scripts.scripts]]
+commands = [
+  "dotnet clean -c release",
+  "dotnet clean -c debug",
+  "dotnet build -c release",
+]
+artifacts = {}
+
 [tool.hatch.build]
 dev-mode-dirs = ["src"]
 
@@ -56,6 +64,8 @@ dependencies = [
   "ruff",
   "mypy",
   "black",
+  "GitPython",
+  "semantic-version",
 ]
 
 [tool.hatch.envs.default.scripts]
@@ -72,6 +82,28 @@ dependencies = ["mypy>=1.0.0"]
 
 [tool.hatch.envs.types.scripts]
 check = "mypy --install-types --non-interactive {args:src/DotNetLibraryBase utests}"
+
+[tool.hatch.envs.build]
+skip-install = true
+detached = true
+python = "38"
+dependencies = [
+  "GitPython",
+  "semantic-version",
+  "commitizen>=3.0.0",
+  "git-cliff==1.4.0",
+]
+
+[tool.hatch.envs.build.scripts]
+update-changelog = ["python scripts/update_changelog.py"]
+update-git-versions = ["python scripts/update_git_versions.py"]
+update-doc-links = ["python scripts/update_doc_links.py"]
+package = ["python scripts/package.py"]
+publish = ["python scripts/publish.py"]
+extract-release-notes = ["python scripts/extract_release_notes.py"]
+is-prerelease = ["python scripts/is_prerelease.py"]
+bump = ["cz bump"]
+
 
 [tool.coverage.run]
 source_pkgs = ["DotNetLibraryBase", "utests"]
@@ -141,7 +173,7 @@ select = [
 
 [tool.ruff.lint.isort]
 detect-same-package = true
-known-first-party = ["robotcode"]
+# known-first-party = ["robotcode"]
 
 [tool.ruff.lint.flake8-pytest-style]
 fixture-parentheses = false
@@ -193,3 +225,22 @@ exclude = ["**/.hatch", "**/node_modules", "**/__pycache__", "bundled/libs"]
 typeCheckingMode = "off"
 pythonVersion = "3.8"
 reportMissingImports = "error"
+
+[tool.commitizen]
+name = "cz_conventional_commits"
+bump_message = "chore(release): bump version $current_version → $new_version"
+tag_format = "v$version"
+version_scheme = "semver"
+version_provider = "scm"
+update_changelog_on_bump = false
+major_version_zero = true
+changelog_incremental = true
+changelog_merge_prerelease = true
+gpg_sign = true
+annotated_tag = true
+# pre_bump_hooks = [
+#   # "hatch env remove lint",
+#   "hatch run build:update-git-versions",
+#   "hatch run build:update-changelog",
+#   "git add .",
+# ]
