@@ -215,7 +215,7 @@ exclude = [
 # allow_untyped_calls = true
 
 [[tool.mypy.overrides]]
-module = ["robot.*", "clr", "System"]
+module = ["robot.*", "clr", "System.*", "RobotFramework.*"]
 ignore_missing_imports = true
 no_implicit_reexport = false
 

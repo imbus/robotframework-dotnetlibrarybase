@@ -2,43 +2,79 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+
 import sys
-from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, List, Mapping, Optional, Sequence
+from typing import Any, Callable, List, Mapping, Optional, Protocol, Sequence, Tuple, TypedDict, Union
 
 from robot.api.interfaces import DynamicLibrary
 from robot.utils import find_file
+
+# pyright: reportMissingImports=false, reportUnusedVariable=warning
 
 
 def _is_file(s: str) -> bool:
     return s.lower().endswith(".dll") or "\\" in s or "/" in s
 
 
-@dataclass
-class KeywordInfo:
-    name: str
+class TypeNameWithOptions(TypedDict):
+    type_name: str
+    options: Any
+
+
+class TypeName(str):
+    @staticmethod
+    def from_string(value: str) -> "TypeName":
+        return TypeName(value)
+
+
+class classproperty(object):  # noqa: N801
+    def __init__(self, f: Callable[..., Any]) -> None:
+        self.f = f
+
+    def __get__(self, _obj: Any, owner: Any) -> Any:
+        return self.f(owner)
+
+
+class KeywordInfo(Protocol):
+    @property
+    def Name(self) -> str: ...  # noqa: N802
+
+
+class LibraryInfo(Protocol):
+    @property
+    def Version(self) -> str: ...  # noqa: N802
+
+    @property
+    def Scope(self) -> str: ...  # noqa: N802
+
+    @property
+    def DocFormat(self) -> str: ...  # noqa: N802
+
+    @property
+    # TODO: implement DictEncoders/Decoders
+    # def Keywords(self) -> Dict[str, KeywordInfo]: ...
+    def Keywords(self) -> Any: ...  # noqa: N802
 
 
 class DotNetLibraryBase(DynamicLibrary):
+    ROBOT_LIBRARY_CONVERTERS = {TypeName: TypeName.from_string}
 
     __dotnet_initialized = False
     __stdout_writer: Any = None
     __stderr_writer: Any = None
 
     @staticmethod
-    def _init_dotnet() -> None:
+    def _ensure_dotnet_initialized() -> None:
         if not DotNetLibraryBase.__dotnet_initialized:
             import clr
-            import System  #  pyright: ignore[reportMissingImports]
+            import System
 
             base_path = (Path(__file__).parent / "runtime").absolute()
 
             clr.AddReference(str(base_path / "RobotFramework.DotNetLibraryBase.dll"))
 
-            from RobotFramework.DotNetLibraryBase import (  # type: ignore[import-not-found]
-                ConsoleRedirectorWriter,
-            )
+            from RobotFramework.DotNetLibraryBase import ConsoleRedirectorWriter
 
             class MyConsoleRedirectorWriter(ConsoleRedirectorWriter):
                 __namespace__ = "RobotFramework.DotNetLibraryBase.Internal"
@@ -69,13 +105,20 @@ class DotNetLibraryBase(DynamicLibrary):
 
             System.Console.SetError(DotNetLibraryBase.__stderr_writer)
 
-    def __init__(self, assembly_qualified_type_name: str, *args: Any, **kwargs: Any) -> None:
-        import clr
-        import System  #  pyright: ignore[reportMissingImports]
+    def __init__(self, type_name: Union[TypeNameWithOptions, TypeName], *args: Any, **kwargs: Any) -> None:
+        self._keyword_infos: Optional[List[KeywordInfo]] = None
+        self._class_name: Optional[str] = None
+        self._namespace: Optional[str] = None
+        self._type: Optional[Any] = None
+        self._instance: Optional[Any] = None
+        self._is_static_class = False
+        self._clr_type: Optional[Any] = None
+        self._library_info: Optional[LibraryInfo] = None
 
-        self._init_dotnet()
+        if not isinstance(type_name, dict):
+            type_name = {"type_name": type_name, "options": None}
 
-        splitted = assembly_qualified_type_name.split(",", 1)
+        splitted = type_name["type_name"].split(",", 1)
         class_name: Optional[str]
         reference_name: Optional[str]
 
@@ -89,40 +132,62 @@ class DotNetLibraryBase(DynamicLibrary):
 
         self._reference_name = reference_name
 
+        if class_name:
+            self._namespace, self._class_name = class_name.rsplit(".", 1)
+
+        self._ensure_dotnet_initialized()
+
+        self._init_instance(*args, **kwargs)
+
+    def _init_instance(self, *args: Any, **kwargs: Any) -> None:
+        import clr
+        from RobotFramework.DotNetLibraryBase import LibraryInfo
+
         if self._reference_name:
             self._reference = clr.AddReference(
                 str(Path(find_file(self._reference_name))) if _is_file(self._reference_name) else self._reference_name
             )
 
-        self._keyword_infos: Optional[List[KeywordInfo]] = None
-
-        self._class_name: Optional[str] = None
-        self._namespace: Optional[str] = None
-        self._instance: Optional[Any] = None
-
-        if class_name:
-            self._namespace, self._class_name = class_name.rsplit(".", 1)
-
+        if self._class_name and self._namespace:
             try:
-                self._instance = getattr(__import__(self._namespace), self._class_name)(*args, *kwargs)
+                self._type = getattr(__import__(self._namespace), self._class_name)
+                self._clr_type = clr.GetClrType(self._type)
+
+                if self._clr_type.IsAbstract and self._clr_type.IsSealed:
+                    self._is_static_class = True
+                    self._instance = self._type
+                else:
+                    self._instance = self._type(*args, *kwargs)
             except (AttributeError, ImportError) as e:
                 raise TypeError(f"Could not load .NET class '{self._namespace}.{self._class_name}'.") from e
 
-    @property
-    def keyword_infos(self) -> List[KeywordInfo]:
-        if self._keyword_infos is None:
-            self._keyword_infos = []
+        self._library_info = LibraryInfo(self._clr_type)
 
-            if self._instance is None:
-                return self._keyword_infos
-
-            for method in self._instance.GetType().GetMethods():
-                self._keyword_infos.append(KeywordInfo(method.Name))
-
-        return self._keyword_infos
+    @classproperty
+    def ROBOT_LIBRARY_SCOPE(cls) -> str:  # noqa: N802
+        # TODO: helper = cls._get_library_helper()
+        return "GLOBAL"
 
     def get_keyword_names(self) -> Sequence[str]:
-        return [i.name for i in self.keyword_infos]
+        if self._library_info is None:
+            return []
+        return [i for i in self._library_info.Keywords.Keys]
+
+    def get_keyword_arguments(self, name: str) -> Optional[Sequence[Union[str, Tuple[str], Tuple[str, Any]]]]:
+        if self._library_info is None:
+            return None
+
+        keyword_info = self._library_info.Keywords[name]
+
+        return [((i.Name, None) if i.IsOptional else i.Name) for i in keyword_info.Arguments]
+
+    def get_keyword_types(self, name: str) -> Optional[Mapping[str, Any]]:
+        if self._library_info is None:
+            return None
+
+        keyword_info = self._library_info.Keywords[name]
+
+        return {i.Name: [t for t in i.Types] for i in keyword_info.Arguments}
 
     def run_keyword(self, name: str, args: Sequence[Any], kwargs: Mapping[str, Any]) -> Any:
         method = getattr(self._instance, name)

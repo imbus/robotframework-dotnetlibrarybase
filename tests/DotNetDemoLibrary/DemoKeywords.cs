@@ -2,22 +2,24 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-﻿namespace DotNetDemoLibrary;
+namespace DotNetDemoLibrary;
 
 public class DemoKeywords
 {
-    public string? a { get; private set; }
+    public const string ROBOT_LIBRARY_SCOPE = "GLOBAL";
+    public const string ROBOT_LIBRARY_VERSION = "1.0";
 
-    // public DemoKeywords()
-    // {
-    //     Console.WriteLine("<empty>");
-    // }
+    public string? AProperty { get; set; }
 
+    public DemoKeywords()
+    {
+        Console.WriteLine("<empty>");
+    }
 
-    public DemoKeywords(string? a)
+    public DemoKeywords(string a)
     {
         Console.WriteLine("string?");
-        this.a = a;
+        this.AProperty = a;
     }
 
     // public DemoKeywords(string[] b)
@@ -30,11 +32,16 @@ public class DemoKeywords
 
     public void DoSomething()
     {
-        Console.WriteLine($"Done Something {this.a}");
+        Console.WriteLine($"Done Something {this.AProperty}");
     }
 
-    public void DoSomethingWithAnString(string value)
+    public void DoSomethingWithAnString(string value = "asd")
     {
-        Console.WriteLine($"Done Something with {value}");
+        Console.WriteLine($"Done Something with str {value}");
+    }
+
+    public void DoSomethingWithAnString(int value = -1, string value2 = "default")
+    {
+        Console.WriteLine($"Done Something with int {value} and str {value2}");
     }
 }

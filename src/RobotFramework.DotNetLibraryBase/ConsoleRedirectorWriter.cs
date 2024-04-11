@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-﻿namespace RobotFramework.DotNetLibraryBase;
+namespace RobotFramework.DotNetLibraryBase;
 
 using System.Text;
 
@@ -15,6 +15,7 @@ public class ConsoleRedirectorWriter : TextWriter
         else
             Encoding = Encoding.Default;
     }
+
     public override Encoding Encoding { get; }
 
     public override void Write(char value)
@@ -22,8 +23,5 @@ public class ConsoleRedirectorWriter : TextWriter
         WriteChar(value);
     }
 
-    protected virtual void WriteChar(char value)
-    {
-
-    }
+    protected virtual void WriteChar(char value) { }
 }
