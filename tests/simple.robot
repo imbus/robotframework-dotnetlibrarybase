@@ -16,3 +16,10 @@ first
     ${aa}    Str.Get Length
     Console.WriteLine    Hallo Welt from Console
     Console.Set ForegroundColor    Green
+    Console.WriteLine    Hallo Welt from Console in Green
+
+second
+    Do Something With An String    another value
+
+third
+    Console.Write Line    buffer=Hallo Welt from Console

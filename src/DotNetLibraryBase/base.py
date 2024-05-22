@@ -3,9 +3,12 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
+import functools
+import importlib
 import sys
+from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, List, Mapping, Optional, Protocol, Sequence, Tuple, TypedDict, Union
+from typing import Any, Callable, Dict, List, Mapping, Optional, Protocol, Sequence, Tuple, Type, TypedDict, Union
 
 from robot.api.interfaces import DynamicLibrary
 from robot.utils import find_file
@@ -58,7 +61,7 @@ class LibraryInfo(Protocol):
 
 
 class DotNetLibraryBase(DynamicLibrary):
-    ROBOT_LIBRARY_CONVERTERS = {TypeName: TypeName.from_string}
+    ROBOT_LIBRARY_CONVERTERS: Dict[Any, Any] = {TypeName: TypeName.from_string}
 
     __dotnet_initialized = False
     __stdout_writer: Any = None
@@ -114,6 +117,7 @@ class DotNetLibraryBase(DynamicLibrary):
         self._is_static_class = False
         self._clr_type: Optional[Any] = None
         self._library_info: Optional[LibraryInfo] = None
+        self._enum_types: List[Type[Any]] = []
 
         if not isinstance(type_name, dict):
             type_name = {"type_name": type_name, "options": None}
@@ -150,7 +154,8 @@ class DotNetLibraryBase(DynamicLibrary):
 
         if self._class_name and self._namespace:
             try:
-                self._type = getattr(__import__(self._namespace), self._class_name)
+                module = importlib.import_module(self._namespace)
+                self._type = getattr(module, self._class_name)
                 self._clr_type = clr.GetClrType(self._type)
 
                 if self._clr_type.IsAbstract and self._clr_type.IsSealed:
@@ -181,14 +186,93 @@ class DotNetLibraryBase(DynamicLibrary):
 
         return [((i.Name, None) if i.IsOptional else i.Name) for i in keyword_info.Arguments]
 
+    @functools.cached_property
+    def _simple_types_mapping(self) -> Dict[Tuple[Any, ...], "Type[Any]"]:
+        import clr
+        import System
+
+        def get_types(*args: Any) -> Tuple[Any, ...]:
+            return tuple(clr.GetClrType(t) for t in args)
+
+        return {
+            get_types(System.String): str,
+            get_types(
+                System.Int16,
+                System.Int32,
+                System.Int64,
+                System.UInt16,
+                System.UInt32,
+                System.UInt64,
+                System.Byte,
+                System.SByte,
+            ): int,
+            get_types(
+                System.Single,
+                System.Double,
+                System.Single,
+                System.Decimal,
+            ): float,
+            get_types(
+                System.Boolean,
+                System.Double,
+                System.Single,
+                System.Decimal,
+            ): bool,
+            # TODO: Char
+            # TODO: System.Object
+            # TODO "System.DateTime": str,
+        }
+
+    def _convert_type(self, type_: Any) -> Any:
+        import System
+
+        is_nullable = False
+        nullable_type = System.Nullable.GetUnderlyingType(type_)
+        if nullable_type is not None:
+            type_ = nullable_type
+            is_nullable = True
+
+        for dotnet_types, python_type in self._simple_types_mapping.items():
+            if type_ in dotnet_types:
+                return Union[python_type, None] if is_nullable else python_type
+
+        if type_.IsEnum:
+            return_type = Enum(  # type: ignore
+                str(type_.Name),
+                [(type_.GetEnumName(i), i) for i in type_.GetEnumValues()],
+                module=self.__module__,
+            )
+            self._enum_types.append(return_type)
+            return return_type
+
+        type_converters = getattr(self, "DOTNET_TYPE_CONVERTER", None)
+        if type_converters is None:
+            return type_
+
+        type_name = str(type_)
+        if type_name in type_converters:
+            return type_converters[type_name]
+
+        return type_converters.get(str(type), type_)
+
     def get_keyword_types(self, name: str) -> Optional[Mapping[str, Any]]:
         if self._library_info is None:
             return None
 
         keyword_info = self._library_info.Keywords[name]
 
-        return {i.Name: [t for t in i.Types] for i in keyword_info.Arguments}
+        return {i.Name: [self._convert_type(t) for t in i.Types] for i in keyword_info.Arguments}
 
     def run_keyword(self, name: str, args: Sequence[Any], kwargs: Mapping[str, Any]) -> Any:
         method = getattr(self._instance, name)
-        return method(*args, **kwargs)
+        real_args = list(args)
+        real_kwargs = dict(kwargs)
+        for i, v in enumerate(real_args):
+            if type(v) in self._enum_types:
+                real_args[i] = v.value
+
+        for v in real_kwargs:
+            if type(real_kwargs[v]) in self._enum_types:
+                real_kwargs[v] = real_kwargs[v].value
+
+        return method(*real_args, **kwargs)

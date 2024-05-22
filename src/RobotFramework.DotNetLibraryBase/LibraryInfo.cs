@@ -104,6 +104,16 @@ public class KeywordInfo
             }
         }
 
+        var opt = false;
+        foreach (var arg in arguments)
+        {
+            if (arg.IsOptional)
+                opt = true;
+
+            if (opt && !arg.IsOptional) {
+                arg.IsOptional = true;
+            }
+        }
         return arguments.ToArray();
     }
 }

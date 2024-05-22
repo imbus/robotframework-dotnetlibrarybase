@@ -35,13 +35,13 @@ public class DemoKeywords
         Console.WriteLine($"Done Something {this.AProperty}");
     }
 
-    public void DoSomethingWithAnString(string value = "asd")
+    public void DoSomethingWithAnString(string value)
     {
         Console.WriteLine($"Done Something with str {value}");
     }
 
-    public void DoSomethingWithAnString(int value = -1, string value2 = "default")
+    public void DoSomethingWithAnInt(int value)
     {
-        Console.WriteLine($"Done Something with int {value} and str {value2}");
+        Console.WriteLine($"Done Something with int {value}");
     }
 }

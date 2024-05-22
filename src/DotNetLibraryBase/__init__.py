@@ -2,6 +2,6 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-from .base import DotNetLibraryBase
+from .base import DotNetLibraryBase, TypeName, TypeNameWithOptions
 
-__all__ = ["DotNetLibraryBase"]
+__all__ = ["DotNetLibraryBase", "TypeName", "TypeNameWithOptions"]
