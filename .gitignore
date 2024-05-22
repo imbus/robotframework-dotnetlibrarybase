@@ -215,3 +215,6 @@ selenium-screenshot-*.png
 
 # playground
 playground/
+
+# compilations
+src/DotNetLibraryBase/runtime/
