@@ -75,7 +75,7 @@ class DotNetLibraryBase(DynamicLibrary):
 
             base_path = (Path(__file__).parent / "runtime").absolute()
 
-            clr.AddReference(str(base_path / "RobotFramework.DotNetLibraryBase.dll"))
+            clr.AddReference(str(base_path / "RobotFramework.DotNetLibraryBase"))
 
             from RobotFramework.DotNetLibraryBase import ConsoleRedirectorWriter
 

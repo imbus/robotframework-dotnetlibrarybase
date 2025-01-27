@@ -14,7 +14,7 @@ public class LibraryInfoTest
     [Fact]
     public void MethodsShouldFind4Keywords()
     {
-        Assert.Equal(4, Info.Keywords.Count);
+        Assert.Equal(5, Info.Keywords.Count);
         Assert.Contains("DoSomething", Info.Keywords.Keys);
         Assert.Contains("DoSomethingWithAnString", Info.Keywords.Keys);
         Assert.Contains("set_AProperty", Info.Keywords.Keys);

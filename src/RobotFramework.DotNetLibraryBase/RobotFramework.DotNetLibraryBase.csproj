@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;net8.0</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;net8.0;net9.0</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <LangVersion>10</LangVersion>
@@ -18,6 +18,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="pythonnet" Version="3.0.3" />
+    <PackageReference Include="pythonnet" Version="3.0.5" />
   </ItemGroup>
 </Project>
