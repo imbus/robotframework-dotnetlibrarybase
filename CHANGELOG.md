@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
+## [0.2.0](https://github.com/imbus/robotframework-dotnetlibrarybase/compare/v0.1.0..v0.2.0) - 2025-01-27
+
+### Features
+
+- Simple for support arguments and argument types in keyword signature ([c0b3375](https://github.com/imbus/robotframework-dotnetlibrarybase/commit/c0b3375ded1b16383cfb817970bdfc5ec086dd79))
+- Implement some automatic argument type conversion between standard types ([9159821](https://github.com/imbus/robotframework-dotnetlibrarybase/commit/9159821b7ef0e990c7b5b56e7e4ff73b07ada77e))
+- Support for dotnet 9.0 ([d473732](https://github.com/imbus/robotframework-dotnetlibrarybase/commit/d4737320058de9860bb1305adde13d7d1e0d7a6e))
+
+
 ## [0.1.0] - 2024-04-09
 
 ### Features
