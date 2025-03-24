@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
+## [0.3.0](https://github.com/imbus/robotframework-dotnetlibrarybase/compare/v0.2.0..v0.3.0) - 2025-03-24
+
+### Features
+
+- Update project dependencies and informations ([d2b3864](https://github.com/imbus/robotframework-dotnetlibrarybase/commit/d2b3864589d45ef917b917b6177fce373c0e585b))
+
+
 ## [0.2.0](https://github.com/imbus/robotframework-dotnetlibrarybase/compare/v0.1.0..v0.2.0) - 2025-01-27
 
 ### Features
